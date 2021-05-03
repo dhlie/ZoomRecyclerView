@@ -17,5 +17,10 @@ class MainActivity : AppCompatActivity() {
         binding.tvText.setOnClickListener {
             startActivity(Intent(this, ListActivity::class.java))
         }
+
+        binding.tvText2.setOnClickListener {
+            val dialog = BDialog(MainActivity@this)
+            dialog.show()
+        }
     }
 }

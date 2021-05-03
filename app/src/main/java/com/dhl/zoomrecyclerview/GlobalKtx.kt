@@ -24,4 +24,12 @@ val Float.dp: Float
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, Resources.getSystem().displayMetrics)
     }
 
+fun getScreenWidth(): Int {
+    return App.instance.resources.displayMetrics.widthPixels
+}
+
+fun getScreenHeight(): Int {
+    return App.instance.resources.displayMetrics.heightPixels
+}
+
 class BindingViewHolder<T : ViewBinding>(val binding: T) : RecyclerView.ViewHolder(binding.root)

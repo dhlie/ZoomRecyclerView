@@ -8,11 +8,11 @@ import android.os.SystemClock
 import android.util.SparseArray
 import android.view.View
 import android.view.View.MeasureSpec
-import androidx.recyclerview.widget.LinearSmoothScroller
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.*
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.round
 
 
 /**
@@ -46,6 +46,14 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
     private val detachedViewCache = SparseArray<View>()
     private var recycler: RecyclerView.Recycler? = null
     private var scaleScroller: ScaleScroller = ScaleScroller()
+    private var orientationHelper = OrientationHelper.createOrientationHelper(this, RecyclerView.VERTICAL)
+
+    /**
+     * Works the same way as [android.widget.AbsListView.setSmoothScrollbarEnabled].
+     * see [android.widget.AbsListView.setSmoothScrollbarEnabled]
+     */
+     var smoothScrollbarEnabled = true
+
 
     private val handler: Handler = object : Handler() {
         override fun handleMessage(msg: Message) {
@@ -198,6 +206,65 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
 
     override fun canScrollVertically(): Boolean {
         return true
+    }
+
+    /**
+     * 计算滚动条的位置
+     *
+     * see [com.dhl.zoom.ZoomLayoutManager.computeVerticalScrollOffset]
+     * see [com.dhl.zoom.ZoomLayoutManager.computeVerticalScrollRange]
+     * see [com.dhl.zoom.ZoomLayoutManager.computeVerticalScrollExtent]
+     */
+    override fun computeVerticalScrollOffset(state: RecyclerView.State): Int {
+        if (childCount == 0 || state.itemCount == 0) {
+            return 0
+        }
+        val startChild = getChildAt(0) ?: return 0
+        val endChild = getChildAt(childCount - 1) ?: return 0
+        val minPosition = getPosition(startChild)
+        val itemsBefore = max(0, minPosition)
+        if (!smoothScrollbarEnabled) {
+            if (itemsBefore == 0 && orientationHelper.getDecoratedStart(startChild) < 0) {
+                return 1
+            }
+            return itemsBefore
+        }
+        val laidOutArea = orientationHelper.getDecoratedEnd(endChild) - orientationHelper.getDecoratedStart(startChild)
+        val itemRange = getPosition(endChild) - getPosition(startChild) + 1
+        val avgSizePerRow = laidOutArea.toFloat() / itemRange
+
+        return round(itemsBefore * avgSizePerRow + ((orientationHelper.startAfterPadding - orientationHelper.getDecoratedStart(startChild)))).toInt()
+    }
+
+    override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
+        if (childCount == 0 || state.itemCount == 0) {
+            return 0
+        }
+        val startChild = getChildAt(0) ?: return 0
+        val endChild = getChildAt(childCount - 1) ?: return 0
+        if (!smoothScrollbarEnabled) {
+            return state.itemCount
+        }
+        // smooth scrollbar enabled. try to estimate better.
+        // smooth scrollbar enabled. try to estimate better.
+        val laidOutArea = orientationHelper.getDecoratedEnd(endChild) - orientationHelper.getDecoratedStart(startChild)
+        val laidOutRange = getPosition(endChild) - getPosition(startChild) + 1
+        // estimate a size for full list.
+        // estimate a size for full list.
+        return (laidOutArea.toFloat() / laidOutRange * state.itemCount).toInt()
+    }
+
+    override fun computeVerticalScrollExtent(state: RecyclerView.State): Int {
+        if (childCount == 0 || state.itemCount == 0) {
+            return 0
+        }
+        val startChild = getChildAt(0) ?: return 0
+        val endChild = getChildAt(childCount - 1) ?: return 0
+        if (!smoothScrollbarEnabled) {
+            return getPosition(endChild) - getPosition(startChild) + 1
+        }
+        val extend = orientationHelper.getDecoratedEnd(endChild) - orientationHelper.getDecoratedStart(startChild)
+        return min(orientationHelper.totalSpace, extend)
     }
 
     override fun scrollHorizontallyBy(dx: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {

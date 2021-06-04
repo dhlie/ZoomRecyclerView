@@ -161,9 +161,9 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
         )
     }
 
-    override fun isAutoMeasureEnabled(): Boolean {
-        return true
-    }
+    //override fun isAutoMeasureEnabled(): Boolean {
+    //    return true
+    //}
 
     override fun onAdapterChanged(oldAdapter: Adapter<*>?, newAdapter: Adapter<*>?) {
         removeAllViews()

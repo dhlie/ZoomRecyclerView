@@ -9,5 +9,6 @@
 [Apk](apk/app-debug.apk)
 
 
-
-![](apk/screen.mp4)
+<video id="video" controls="" preload="none">
+      <source id="mp4" src="apk/screen.mp4" type="video/mp4">
+</video>

@@ -120,6 +120,37 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
             return false
         }
 
+        /**
+         * 缩放时 item 的间隔高度是不变的, 所以整个列表并不是完全等比缩放
+         * 如果缩放点上方存在 item 间隔,缩放后中心点会向上偏移
+         * 因此要找到缩放点上方间隔的总高度,缩放时进行偏移量修正
+         */
+        var totalVerPadding = 0
+        var totalHorPadding = 0
+        for (index in 0 until childCount) {
+            val child = getChildAt(index)!!
+            val decoBottom = getDecoratedBottom(child)
+            when {
+                pivotY >= decoBottom -> {
+                    totalVerPadding += getTopDecorationHeight(child) + getBottomDecorationHeight(child)
+                }
+                pivotY >= child.bottom -> {
+                    totalVerPadding += getTopDecorationHeight(child) + (pivotY - child.bottom).toInt()
+                }
+                pivotY >= child.top -> {
+                    totalVerPadding += getTopDecorationHeight(child)
+                }
+                pivotY >= getDecoratedTop(child) -> {
+                    totalVerPadding += (pivotY - getDecoratedTop(child)).toInt()
+                }
+            }
+
+            if (pivotY <= decoBottom) {
+                totalHorPadding = getLeftDecorationWidth(child)
+                break
+            }
+        }
+
         var newScale = scaleTo
         newScale = max(min(newScale, MAX_SCALE), MIN_SCALE)
 
@@ -128,8 +159,11 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
         val topViewPosition = getPosition(topView)
 
         val ratioScale: Float = newScale / scale
-        var scaledTop = ((top - pivotY) * ratioScale + pivotY).toInt()
-        var scaledLeft = ((childrenLeft - pivotX) * ratioScale + pivotX).toInt()
+        //(pivotY - scaledTop - totalVerPadding) / (pivotY - top - totalVerPadding) = ratioScale
+        var scaledTop = (pivotY - totalVerPadding - (pivotY - top - totalVerPadding) * ratioScale).toInt()
+
+        //(pivotX - scaledLeft - totalHorPadding) / (pivotX - childrenLeft - totalHorPadding) = ratioScale
+        var scaledLeft = (pivotX - totalHorPadding - (pivotX - childrenLeft - totalHorPadding) * ratioScale).toInt()
         // trim top
         if (topViewPosition == 0) {
             scaledTop = min(0, scaledTop)

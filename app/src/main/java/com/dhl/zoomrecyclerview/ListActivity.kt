@@ -1,6 +1,8 @@
 package com.dhl.zoomrecyclerview
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
@@ -129,24 +131,45 @@ class ListAdapter(private val context: Context) : Adapter<BindingViewHolder<List
 
 class ItemDetector : RecyclerView.ItemDecoration() {
 
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xffff0000.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 1.dp
+    }
+
+    override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+        val layoutManager = parent.layoutManager ?: return
+        for (index in 0 until parent.childCount) {
+            val child = parent.getChildAt(index)
+            c.drawRect(
+                layoutManager.getDecoratedLeft(child).toFloat(),
+                layoutManager.getDecoratedTop(child).toFloat(),
+                layoutManager.getDecoratedRight(child).toFloat(),
+                layoutManager.getDecoratedBottom(child).toFloat(),
+                paint
+            )
+        }
+    }
+
     override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         val position = parent.getChildAdapterPosition(view)
         val dp8 = 8.dp.toInt()
-        outRect.left = dp8
-        outRect.right = dp8
+        val verPadding = dp8 * 6
+        outRect.left = dp8 * 2
+        outRect.right = dp8 * 2
 
         when (position) {
             0 -> {
                 outRect.top = dp8
-                outRect.bottom = dp8 / 2
+                outRect.bottom = verPadding / 2
             }
             state.itemCount - 1 -> {
                 outRect.bottom = dp8
-                outRect.top = dp8 / 2
+                outRect.top = verPadding / 2
             }
             else -> {
-                outRect.top = dp8 / 2
-                outRect.bottom = dp8 / 2
+                outRect.top = verPadding / 2
+                outRect.bottom = verPadding / 2
             }
         }
     }

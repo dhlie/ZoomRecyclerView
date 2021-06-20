@@ -8,8 +8,10 @@ import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.recyclerview.widget.RecyclerView
 import com.dhl.zoom.ZoomLayoutManager
+import com.dhl.zoomrecyclerview.R
 import com.dhl.zoomrecyclerview.databinding.ListItemLayoutBinding
 import kotlin.math.abs
 
@@ -23,6 +25,7 @@ import kotlin.math.abs
 class MyConstraintLayout : ConstraintLayout {
 
     private lateinit var binding: ListItemLayoutBinding
+    private val constraintSet = ConstraintSet()
     private val textSize = 14
 
     private var downLeft: Int = 0
@@ -47,6 +50,7 @@ class MyConstraintLayout : ConstraintLayout {
     override fun onFinishInflate() {
         super.onFinishInflate()
         binding = ListItemLayoutBinding.bind(this)
+        constraintSet.clone(this)
         val touchListener = OnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -70,11 +74,12 @@ class MyConstraintLayout : ConstraintLayout {
                     top /= measuredHeight
                     right /= measuredWidth
                     bottom /= measuredHeight
-                    binding.glIvTop.setGuidelinePercent(top)
-                    binding.glIvStart.setGuidelinePercent(left)
-                    binding.glIvEnd.setGuidelinePercent(right)
-                    binding.glIvBottom.setGuidelinePercent(bottom)
 
+                    this.left = left
+                    this.top = top
+                    this.right = right
+                    this.bottom = bottom
+                    requestLayout()
                 }
                 MotionEvent.ACTION_CANCEL,
                 MotionEvent.ACTION_UP -> {
@@ -91,6 +96,14 @@ class MyConstraintLayout : ConstraintLayout {
         binding.ivIcon.setOnTouchListener(touchListener)
     }
 
+    private var lasttop = 0f
+    private var lastleft = 0f
+    private var lastright = 0f
+    private var lastbottom = 0f
+    private var top = 0f
+    private var left = 0f
+    private var right = 0f
+    private var bottom = 0f
     private fun onClick() {
         Toast.makeText(context, "click: ${binding.tvText.text}", Toast.LENGTH_SHORT).show()
     }
@@ -98,6 +111,20 @@ class MyConstraintLayout : ConstraintLayout {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         binding.tvText.textSize = textSize * getRecyclerViewScale()
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+        if (lastleft != left || lasttop != top || lastright != right || lastbottom != bottom) {
+            constraintSet.setGuidelinePercent(R.id.gl_iv_start, left)
+            constraintSet.setGuidelinePercent(R.id.gl_iv_top, top)
+            constraintSet.setGuidelinePercent(R.id.gl_iv_end, right)
+            constraintSet.setGuidelinePercent(R.id.gl_iv_bottom, bottom)
+            constraintSet.applyTo(this)
+
+            lastleft = left
+            lasttop = top
+            lastright = right
+            lastbottom = bottom
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        }
     }
 
     private fun getRecyclerViewScale(): Float {

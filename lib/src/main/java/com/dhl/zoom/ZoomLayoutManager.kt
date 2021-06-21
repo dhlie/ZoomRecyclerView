@@ -301,7 +301,7 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
         return min(orientationHelper.totalSpace, extend)
     }
 
-    override fun scrollHorizontallyBy(dx: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
+    override fun scrollHorizontallyBy(dx: Int, recycler: RecyclerView.Recycler?, state: RecyclerView.State?): Int {
         if (childCount == 0) {
             return 0
         }
@@ -419,7 +419,7 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
             var view: View? = detachedViewCache.get(nextPosition).apply { detachedViewCache.remove(nextPosition) }
             if (view != null) {
                 attachView(view)
-                if (reLayout) {
+                if (reLayout || view.isLayoutRequested) {
                     measureChildWithScale(view, 0, 0)
                     layoutDecoratedWithMargins(
                         view,

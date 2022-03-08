@@ -3,12 +3,15 @@ package com.dhl.zoom
 import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.os.SystemClock
 import android.util.SparseArray
 import android.view.View
 import android.view.View.MeasureSpec
-import androidx.recyclerview.widget.*
+import androidx.recyclerview.widget.LinearSmoothScroller
+import androidx.recyclerview.widget.OrientationHelper
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import kotlin.math.max
 import kotlin.math.min
@@ -26,7 +29,7 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
 
     companion object {
         const val MIN_SCALE = .9f
-        const val MAX_SCALE = 3f
+        const val MAX_SCALE = 4f
         const val DOUBLE_TAP_SCALE = 2f
         const val NORMAL_SCALE = 1f
 
@@ -52,10 +55,10 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
      * Works the same way as [android.widget.AbsListView.setSmoothScrollbarEnabled].
      * see [android.widget.AbsListView.setSmoothScrollbarEnabled]
      */
-     var smoothScrollbarEnabled = true
+    var smoothScrollbarEnabled = true
 
 
-    private val handler: Handler = object : Handler() {
+    private val handler: Handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
                 MSG_SCALE -> {
@@ -87,7 +90,7 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
     }
 
     fun doubleTap() {
-        val scaleTo = if (scale == NORMAL_SCALE) DOUBLE_TAP_SCALE else NORMAL_SCALE
+        val scaleTo = if (scale != NORMAL_SCALE) NORMAL_SCALE else DOUBLE_TAP_SCALE
         startScale(scaleTo, SCALE_ANIMATION)
     }
 
@@ -97,8 +100,8 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
     fun adjustScale() {
         if (scale < NORMAL_SCALE) {
             startScale(NORMAL_SCALE, SCALE_ANIMATION)
-        } else if (scale > DOUBLE_TAP_SCALE) {
-            startScale(DOUBLE_TAP_SCALE, SCALE_ANIMATION)
+        } else if (scale > MAX_SCALE) {
+            startScale(MAX_SCALE, SCALE_ANIMATION)
         }
     }
 
@@ -152,7 +155,7 @@ class ZoomLayoutManager : RecyclerView.LayoutManager() {
         }
 
         var newScale = scaleTo
-        newScale = max(min(newScale, MAX_SCALE), MIN_SCALE)
+        newScale = max(newScale, MIN_SCALE)
 
         val topView = getChildAt(0)!!
         val top = getDecoratedTop(topView)

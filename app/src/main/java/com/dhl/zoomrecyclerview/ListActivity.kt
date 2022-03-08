@@ -30,7 +30,8 @@ class ListActivity : AppCompatActivity() {
 
         val layoutManager = ZoomLayoutManager()
         binding.rvList.layoutManager = layoutManager
-        ZoomGestureHelper.initGesture(binding.rvList, layoutManager)
+        ZoomGestureHelper.initScaleGesture(binding.rvList, layoutManager)
+        ZoomGestureHelper.initRecyclerViewDoubleTapGesture(binding.rvList)
         val adapter = ListAdapter(applicationContext)
         binding.rvList.adapter = adapter
         binding.rvList.addItemDecoration(ItemDetector())

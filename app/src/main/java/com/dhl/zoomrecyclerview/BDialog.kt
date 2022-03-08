@@ -32,7 +32,8 @@ class BDialog(context: Context) : BottomSheetDialog(context, R.style.AppTheme_Di
         behavior.peekHeight = getScreenHeight()
         val layoutManager = ZoomLayoutManager()
         binding.rvList.layoutManager = layoutManager
-        ZoomGestureHelper.initGesture(binding.rvList, layoutManager)
+        ZoomGestureHelper.initScaleGesture(binding.rvList, layoutManager)
+        ZoomGestureHelper.initRecyclerViewDoubleTapGesture(binding.rvList)
         val adapter = ListAdapter(context)
         binding.rvList.adapter = adapter
         binding.rvList.addItemDecoration(ItemDetector())

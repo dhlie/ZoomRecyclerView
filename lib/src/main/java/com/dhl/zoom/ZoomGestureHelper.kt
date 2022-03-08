@@ -1,9 +1,11 @@
 package com.dhl.zoom
 
 import android.annotation.SuppressLint
+import android.graphics.Rect
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewParent
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
 
@@ -17,8 +19,8 @@ import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
 class ZoomGestureHelper {
 
     companion object {
-        @SuppressLint("ClickableViewAccessibility")
-        fun initGesture(recyclerView: RecyclerView, zoomLayoutManager: ZoomLayoutManager) {
+
+        fun initScaleGesture(recyclerView: RecyclerView, zoomLayoutManager: ZoomLayoutManager) {
             val scaleGestureDetector = ScaleGestureDetector(recyclerView.context, object : ScaleGestureDetector.OnScaleGestureListener {
 
                 override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
@@ -51,27 +53,67 @@ class ZoomGestureHelper {
                 }
             }
 
-            val clickGestureDetector = GestureDetector(recyclerView.context, object : GestureDetector.SimpleOnGestureListener() {
+            //添加缩放手势监听
+            recyclerView.removeOnItemTouchListener(itemTouchListener)
+            recyclerView.addOnItemTouchListener(itemTouchListener)
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        fun initRecyclerViewDoubleTapGesture(view: View, simpleOnGestureListener: GestureDetector.SimpleOnGestureListener? = null) {
+            val clickGestureDetector = GestureDetector(view.context, object : GestureDetector.SimpleOnGestureListener() {
+
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                    return simpleOnGestureListener?.onSingleTapConfirmed(e) ?: false
+                }
+
                 override fun onDoubleTap(e: MotionEvent): Boolean {
+                    val recycleView: RecyclerView
+                    if (view !is RecyclerView) {
+                        var parent: ViewParent? = view.parent
+                        while (parent != null && parent !is RecyclerView) {
+                            parent = parent.parent
+                        }
+                        recycleView = parent as? RecyclerView ?: return false
+                    } else {
+                        recycleView = view
+                    }
+
+                    val zoomLayoutManager = recycleView.layoutManager as? ZoomLayoutManager ?: return false
                     if (!zoomLayoutManager.zoomable) {
                         return false
                     }
-                    zoomLayoutManager.setScalePivot(e.x, e.y)
+
+                    var pivotX = e.x
+                    var pivotY = e.y
+                    if (view !is RecyclerView) {
+                        val rect = Rect()
+                        getPositionInParentView(view, recycleView, rect)
+
+                        pivotX += rect.left
+                        pivotY += rect.top
+                    }
+
+                    zoomLayoutManager.setScalePivot(pivotX, pivotY)
                     zoomLayoutManager.doubleTap()
                     return true
                 }
             })
 
-            //添加缩放手势监听
-            recyclerView.removeOnItemTouchListener(itemTouchListener)
-            recyclerView.addOnItemTouchListener(itemTouchListener)
-
             //添加双击手势监听
-            recyclerView.setOnTouchListener { _, event ->
+            view.setOnTouchListener { _, event ->
                 clickGestureDetector.onTouchEvent(event)
-                false
             }
         }
+
+        fun getPositionInParentView(targetView: View, parent: View, out: Rect) {
+            out.set(targetView.left, targetView.top, targetView.right, targetView.bottom)
+            var view = targetView.parent as? View
+            while (view != null && view !== parent) {
+                out.offset(view.left, view.top)
+                view = view.parent as? View
+            }
+        }
+
     }
 
 }
